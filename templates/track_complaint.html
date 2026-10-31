@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}Track Complaint | CivicConnect{% endblock %}
+
+{% block content %}
+
+<main class="public-tracking">
+    <section class="tracking-card">
+        <div class="tracking-heading">
+            <span class="tracking-eyebrow">CIVICCONNECT / PUBLIC TRACKING</span>
+            <h1>Track a Complaint</h1>
+            <p>Enter your complaint reference ID to view its current status and updates.</p>
+        </div>
+
+        <form method="POST" action="{{ url_for('track_complaint') }}"
+              class="tracking-search-form">
+            <label for="complaint_id">Complaint reference ID</label>
+            <div class="tracking-search-controls">
+                <input type="text" id="complaint_id" name="complaint_id"
+                       class="form-control" value="{{ reference_id }}"
+                       maxlength="20" pattern="[Cc][Cc]-[A-Za-z0-9]{8}"
+                       placeholder="Example: CC-1234ABCD"
+                       autocomplete="off" required>
+                <button type="submit" class="btn btn-primary">Track</button>
+            </div>
+            <small class="tracking-hint">Use the reference ID provided when the complaint was submitted.</small>
+        </form>
+
+        {% if error_message %}
+        <div class="tracking-message" role="status">{{ error_message }}</div>
+        {% endif %}
+
+        {% if complaint %}
+        <section class="tracking-result" aria-live="polite">
+            <div class="tracking-result-header">
+                <div>
+                    <span class="tracking-eyebrow">COMPLAINT REFERENCE</span>
+                    <h2>{{ complaint.complaint_id }}</h2>
+                </div>
+                {% if complaint.status == 'Resolved' %}
+                <span class="status-badge status-resolved">● Resolved</span>
+                {% elif complaint.status == 'In Progress' %}
+                <span class="status-badge status-progress">● In Progress</span>
+                {% else %}
+                <span class="status-badge status-pending">● {{ complaint.status }}</span>
+                {% endif %}
+            </div>
+
+            <dl class="tracking-details">
+                <div>
+                    <dt>Category</dt>
+                    <dd>{{ complaint.category }}</dd>
+                </div>
+                <div>
+                    <dt>Date submitted</dt>
+                    <dd>{{ complaint.created_at.strftime('%d %b %Y, %I:%M %p') }}</dd>
+                </div>
+                {% if complaint.location %}
+                <div class="tracking-detail-wide">
+                    <dt>Location</dt>
+                    <dd>{{ complaint.location }}</dd>
+                </div>
+                {% endif %}
+                <div class="tracking-detail-wide">
+                    <dt>Description</dt>
+                    <dd>{{ complaint.description }}</dd>
+                </div>
+            </dl>
+
+            <div class="tracking-history">
+                <h3>Status history</h3>
+                {% if complaint.status_history %}
+                <div class="history-content">
+                    <div class="history-timeline">
+                        {% for event in complaint.status_history %}
+                        <div class="history-item">
+                            <span class="history-dot"></span>
+                            <div class="history-event">
+                                <div class="history-event-header">
+                                    <strong>{{ event.status }}</strong>
+                                    <time datetime="{{ event.created_at.isoformat() }}">
+                                        {{ event.created_at.strftime('%d %b %Y, %I:%M %p') }}
+                                    </time>
+                                </div>
+                                {% if event.note %}
+                                <p>{{ event.note }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% else %}
+                <p class="history-empty">No status updates have been recorded yet.</p>
+                {% endif %}
+            </div>
+
+            <button type="button" class="tracking-another-button"
+                    onclick="document.getElementById('complaint_id').focus(); window.scrollTo({top: 0, behavior: 'smooth'});">
+                Track another complaint
+            </button>
+        </section>
+        {% endif %}
+    </section>
+</main>
+
+{% endblock %}

@@ -1,0 +1,81 @@
+
+{% extends "base.html" %}
+
+{% block title %}Submit Complaint | CivicConnect{% endblock %}
+
+{% block content %}
+
+<div class="form-container">
+    <div class="card shadow border-0">
+        <div class="card-header bg-primary text-white py-3">
+            <h4 class="mb-0">Submit a Public Complaint</h4>
+        </div>
+
+        <div class="card-body p-4">
+
+            <p class="text-muted">
+                Report civic issues in your area. Our administration team
+                will review your complaint.
+            </p>
+
+            <form method="POST" enctype="multipart/form-data">
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Complaint Category</label>
+
+                    <select name="category" class="form-select" required>
+                        <option value="">Select Category</option>
+                        <option value="Road">Road Issues</option>
+                        <option value="Water">Water Supply</option>
+                        <option value="Electricity">Electricity</option>
+                        <option value="Garbage">Garbage Management</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Complaint Description</label>
+
+                    <textarea name="description" class="form-control"
+                              rows="5" maxlength="2000"
+                              placeholder="Describe your issue in detail..."
+                              required></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold" for="location">
+                        Location <span class="text-muted fw-normal">(optional)</span>
+                    </label>
+                    <input type="text" id="location" name="location"
+                           class="form-control" maxlength="300"
+                           placeholder="Area, street, or nearby landmark">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold" for="photo">
+                        Photo Evidence <span class="text-muted fw-normal">(optional)</span>
+                    </label>
+                    <input type="file" id="photo" name="photo"
+                           class="form-control"
+                           accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp">
+                    <div class="form-text">JPG, JPEG, PNG, or WEBP. Maximum size: 5 MB.</div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        Submit Complaint
+                    </button>
+
+                    <a href="{{ url_for('user_dashboard') }}"
+                       class="btn btn-outline-secondary">
+                        Cancel
+                    </a>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+
+{% endblock %}

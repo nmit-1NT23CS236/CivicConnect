@@ -1,0 +1,495 @@
+
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="civic-dashboard">
+
+    <!-- SIDEBAR -->
+    <aside class="dashboard-sidebar">
+
+        <div class="sidebar-brand">
+            <span class="brand-icon">🏛️</span>
+            <div>
+                <h3>CivicConnect</h3>
+                <small>Citizen Portal</small>
+            </div>
+        </div>
+
+        <div class="sidebar-label">MAIN MENU</div>
+
+        <a href="{{ url_for('user_dashboard') }}"
+           class="sidebar-link active">
+            <span>▦</span> Dashboard
+        </a>
+
+        <a href="{{ url_for('submit_complaint') }}"
+           class="sidebar-link">
+            <span>＋</span> Submit Complaint
+        </a>
+
+        <a href="#complaint-history" class="sidebar-link">
+            <span>▤</span> My Complaints
+        </a>
+
+        <div class="sidebar-bottom">
+
+            <div class="sidebar-help">
+                <div class="help-icon">💬</div>
+                <strong>Need assistance?</strong>
+                <p>Help make your community better.</p>
+            </div>
+
+            <a href="{{ url_for('logout') }}"
+               class="sidebar-link logout-link">
+                <span>↪</span> Logout
+            </a>
+
+        </div>
+    </aside>
+
+
+    <!-- MAIN CONTENT -->
+    <main class="dashboard-main">
+
+        <!-- TOP BAR -->
+        <header class="dashboard-topbar">
+
+            <div>
+                <span class="topbar-label">
+                    CITIZEN PORTAL / OVERVIEW
+                </span>
+                <h2>Dashboard</h2>
+            </div>
+
+            <div class="user-profile">
+
+                <div class="user-avatar">
+                    {{ session.get('name', 'U')[0]|upper }}
+                </div>
+
+                <div>
+                    <strong>{{ session.get('name', 'Citizen') }}</strong>
+                    <small>Citizen Account</small>
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <!-- WELCOME BANNER -->
+        <section class="welcome-banner">
+
+            <div>
+                <span class="welcome-tag">YOUR VOICE MATTERS</span>
+
+                <h1>
+                    Hello, {{ session.get('name', 'Citizen') }}! 👋
+                </h1>
+
+                <p>
+                    Welcome to CivicConnect. Report local issues,
+                    monitor your complaints and help improve your community.
+                </p>
+
+                <a href="{{ url_for('submit_complaint') }}"
+                   class="welcome-button">
+                    + Submit a Complaint
+                </a>
+            </div>
+
+            <div class="welcome-illustration">🏙️</div>
+
+        </section>
+
+
+        <!-- STATISTICS -->
+        <section class="stats-section">
+
+            <div class="section-heading">
+                <div>
+                    <h3>Complaint Overview</h3>
+                    <p>Track the progress of your reported issues.</p>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+
+                <div class="stat-card">
+                    <div class="stat-icon total-icon">▤</div>
+                    <span>Total Complaints</span>
+                    <h2>{{ total }}</h2>
+                    <small>All submissions</small>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon pending-icon">◷</div>
+                    <span>Pending</span>
+                    <h2>{{ pending }}</h2>
+                    <small>Awaiting attention</small>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon resolved-icon">✓</div>
+                    <span>Resolved</span>
+                    <h2>{{ resolved }}</h2>
+                    <small>Successfully addressed</small>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- COMPLAINT HISTORY -->
+        <section class="complaints-section" id="complaint-history">
+
+            <div class="section-heading">
+
+                <div>
+                    <h3>My Complaints</h3>
+                    <p>
+                        Search and track the complaints you have submitted.
+                    </p>
+                </div>
+
+                <a href="{{ url_for('submit_complaint') }}"
+                   class="secondary-button">
+                    + New Complaint
+                </a>
+
+            </div>
+
+
+            {% if complaints %}
+
+            <!-- SEARCH AND FILTERS -->
+            <div class="complaint-filters">
+
+                <div class="complaint-search">
+                    <span>🔍</span>
+
+                    <input
+                        type="text"
+                        id="complaintSearch"
+                        placeholder="Search complaint ID or description..."
+                        oninput="filterComplaints()"
+                    >
+                </div>
+
+                <select
+                    id="categoryFilter"
+                    onchange="filterComplaints()">
+
+                    <option value="">All Categories</option>
+                    <option value="Road">Road</option>
+                    <option value="Water">Water</option>
+                    <option value="Electricity">Electricity</option>
+                    <option value="Garbage">Garbage</option>
+                    <option value="Other">Other</option>
+
+                </select>
+
+                <select
+                    id="statusFilter"
+                    onchange="filterComplaints()">
+
+                    <option value="">All Statuses</option>
+                    <option value="Pending">Pending</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Resolved">Resolved</option>
+
+                </select>
+
+            </div>
+
+
+            <!-- FILTER RESULT COUNT -->
+            <div class="filter-result">
+                Showing <strong id="visibleCount">{{ complaints|length }}</strong>
+                of {{ complaints|length }} complaints
+            </div>
+
+
+            <!-- COMPLAINT TABLE -->
+            <div class="complaint-table-wrapper">
+
+                <table class="complaint-table">
+
+                    <thead>
+                        <tr>
+                            <th>REFERENCE ID</th>
+                            <th>CATEGORY</th>
+                            <th>DESCRIPTION</th>
+                            <th>DATE SUBMITTED</th>
+                            <th>STATUS</th>
+                            <th>ACTION</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for complaint in complaints %}
+
+                        <tr
+                            class="complaint-row"
+                            data-category="{{ complaint.category }}"
+                            data-status="{{ complaint.status }}"
+                            data-history-target="tracking-{{ complaint.id }}">
+
+                            <td>
+                                <strong class="reference-id">
+                                    {{ complaint.complaint_id }}
+                                </strong>
+                            </td>
+
+                            <td>
+                                <span class="category-label">
+                                    {{ complaint.category }}
+                                </span>
+                            </td>
+
+                            <td class="description-cell">
+                                {{ complaint.description }}
+                                {% if complaint.location %}
+                                <small class="complaint-location">
+                                    Location: {{ complaint.location }}
+                                </small>
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                {{ complaint.created_at.strftime('%d %b %Y') }}
+                            </td>
+
+                            <td>
+
+                                {% if complaint.status == 'Resolved' %}
+
+                                <span class="status-badge status-resolved">
+                                    ● Resolved
+                                </span>
+
+                                {% elif complaint.status == 'In Progress' %}
+
+                                <span class="status-badge status-progress">
+                                    ● In Progress
+                                </span>
+
+                                {% else %}
+
+                                <span class="status-badge status-pending">
+                                    ● Pending
+                                </span>
+
+                                {% endif %}
+
+                            </td>
+
+                            <td>
+                                <button
+                                    type="button"
+                                    class="progress-button"
+                                    data-history-target="tracking-{{ complaint.id }}"
+                                    aria-controls="tracking-{{ complaint.id }}"
+                                    aria-expanded="false"
+                                    onclick="toggleComplaintProgress(this)">
+                                    View Progress
+                                </button>
+                            </td>
+
+                        </tr>
+
+                        <tr id="tracking-{{ complaint.id }}"
+                            class="complaint-tracking-row"
+                            style="display:none;">
+                            <td colspan="6">
+                                <section class="complaint-tracking">
+                                    <h4>Status history</h4>
+
+                                    {% if complaint.status_history %}
+                                    <div class="history-content">
+                                        <div class="history-timeline">
+                                            {% for event in complaint.status_history %}
+                                            <div class="history-item">
+                                                <span class="history-dot"></span>
+                                                <div class="history-event">
+                                                    <div class="history-event-header">
+                                                        <strong>{{ event.status }}</strong>
+                                                        <time datetime="{{ event.created_at.isoformat() }}">
+                                                            {{ event.created_at.strftime('%d %b %Y') }}
+                                                            ·
+                                                            {{ event.created_at.strftime('%I:%M %p') }}
+                                                        </time>
+                                                    </div>
+                                                    <p>
+                                                        <strong>Administrator remarks:</strong>
+                                                        {{ event.note or 'No remarks recorded.' }}
+                                                    </p>
+                                                    <small>Updated by {{ event.updated_by or 'System' }}</small>
+                                                </div>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    {% else %}
+                                    <p class="history-empty">No status history recorded.</p>
+                                    {% endif %}
+                                </section>
+                            </td>
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+
+            <!-- NO SEARCH RESULTS -->
+            <div id="noFilterResults" class="filter-empty"
+                 style="display:none;">
+
+                <div>🔎</div>
+                <h3>No complaints found</h3>
+                <p>Try changing your search or filters.</p>
+
+                <button type="button"
+                        class="reset-filter-button"
+                        onclick="resetFilters()">
+                    Clear Filters
+                </button>
+
+            </div>
+
+
+            {% else %}
+
+            <!-- EMPTY STATE -->
+            <div class="empty-state">
+
+                <div class="empty-icon">📋</div>
+
+                <h3>No complaints yet</h3>
+
+                <p>
+                    You haven't submitted any complaints.
+                    Start by reporting an issue in your community.
+                </p>
+
+                <a href="{{ url_for('submit_complaint') }}"
+                   class="welcome-button">
+                    Submit Your First Complaint
+                </a>
+
+            </div>
+
+            {% endif %}
+
+        </section>
+
+
+        <footer class="dashboard-footer">
+            CivicConnect · Building better communities together.
+        </footer>
+
+    </main>
+
+</div>
+
+
+<!-- SEARCH AND FILTER JAVASCRIPT -->
+<script>
+
+function toggleComplaintProgress(button) {
+
+    const historyRow = document.getElementById(button.dataset.historyTarget);
+    const isExpanded = button.getAttribute("aria-expanded") === "true";
+
+    button.setAttribute("aria-expanded", String(!isExpanded));
+    button.textContent = isExpanded ? "View Progress" : "Hide Progress";
+    historyRow.style.display = isExpanded ? "none" : "table-row";
+
+}
+
+function filterComplaints() {
+
+    const search = document
+        .getElementById("complaintSearch")
+        .value.toLowerCase()
+        .trim();
+
+    const category = document
+        .getElementById("categoryFilter")
+        .value;
+
+    const status = document
+        .getElementById("statusFilter")
+        .value;
+
+    const rows = document.querySelectorAll(".complaint-row");
+
+    let visibleCount = 0;
+
+    rows.forEach(row => {
+
+        const text = row.textContent.toLowerCase();
+
+        const rowCategory = row.dataset.category;
+        const rowStatus = row.dataset.status;
+
+        const matchesSearch = text.includes(search);
+
+        const matchesCategory =
+            !category || rowCategory === category;
+
+        const matchesStatus =
+            !status || rowStatus === status;
+
+        const show =
+            matchesSearch && matchesCategory && matchesStatus;
+
+        row.style.display = show ? "" : "none";
+
+        const historyRow = document.getElementById(row.dataset.historyTarget);
+        const progressButton = row.querySelector(".progress-button");
+        const isExpanded = progressButton.getAttribute("aria-expanded") === "true";
+        historyRow.style.display = show && isExpanded ? "table-row" : "none";
+
+        if (show) {
+            visibleCount++;
+        }
+
+    });
+
+    const noResults = document.getElementById("noFilterResults");
+
+    const count = document.getElementById("visibleCount");
+
+    if (count) {
+        count.textContent = visibleCount;
+    }
+
+    if (noResults) {
+        noResults.style.display =
+            visibleCount === 0 ? "block" : "none";
+    }
+
+}
+
+function resetFilters() {
+
+    document.getElementById("complaintSearch").value = "";
+    document.getElementById("categoryFilter").value = "";
+    document.getElementById("statusFilter").value = "";
+
+    filterComplaints();
+
+}
+
+</script>
+
+{% endblock %}

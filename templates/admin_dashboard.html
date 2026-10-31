@@ -1,0 +1,680 @@
+
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="admin-layout">
+
+    <!-- SIDEBAR -->
+    <aside class="admin-sidebar">
+
+        <div class="admin-brand">
+            <div class="admin-brand-icon">🏛️</div>
+            <div>
+                <h3>CivicConnect</h3>
+                <small>Administration</small>
+            </div>
+        </div>
+
+        <div class="admin-menu-label">WORKSPACE</div>
+
+        <a href="{{ url_for('admin_dashboard') }}"
+           class="admin-nav active">
+            <span>▦</span> Overview
+        </a>
+
+        <a href="#admin-complaints" class="admin-nav">
+            <span>▤</span> Manage Complaints
+        </a>
+
+        <div class="admin-sidebar-bottom">
+
+            <div class="admin-support-card">
+                <div>🛡️</div>
+                <strong>Admin Control Center</strong>
+                <p>Manage citizen grievances and monitor resolutions.</p>
+            </div>
+
+            <a href="{{ url_for('logout') }}" class="admin-nav admin-logout">
+                <span>↪</span> Logout
+            </a>
+
+        </div>
+
+    </aside>
+
+
+    <!-- MAIN -->
+    <main class="admin-main">
+
+        <!-- TOPBAR -->
+        <header class="admin-topbar">
+
+            <div>
+                <span class="admin-eyebrow">CIVICCONNECT / ADMINISTRATION</span>
+                <h1>Admin Dashboard</h1>
+                <p>Monitor complaints and manage citizen requests.</p>
+            </div>
+
+            <div class="admin-user">
+
+                <div class="admin-avatar">A</div>
+
+                <div>
+                    <strong>{{ session.get('name', 'Administrator') }}</strong>
+                    <small>System Administrator</small>
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <!-- WELCOME BANNER -->
+        <section class="admin-welcome">
+
+            <div>
+                <span>ADMINISTRATION OVERVIEW</span>
+                <h2>Welcome back, Administrator 👋</h2>
+                <p>
+                    Here's what's happening across your citizen grievance
+                    management system.
+                </p>
+            </div>
+
+            <div class="admin-welcome-icon">📊</div>
+
+        </section>
+
+
+        <!-- STATISTICS -->
+        <section class="admin-stat-grid">
+
+            <div class="admin-stat-card">
+                <div class="admin-stat-top">
+                    <div class="admin-stat-icon admin-blue">▤</div>
+                    <span class="admin-stat-label">TOTAL COMPLAINTS</span>
+                </div>
+                <h2>{{ total }}</h2>
+                <p>All citizen submissions</p>
+            </div>
+
+            <div class="admin-stat-card">
+                <div class="admin-stat-top">
+                    <div class="admin-stat-icon admin-orange">◷</div>
+                    <span class="admin-stat-label">PENDING</span>
+                </div>
+                <h2>{{ pending }}</h2>
+                <p>Awaiting action</p>
+            </div>
+
+            <div class="admin-stat-card">
+                <div class="admin-stat-top">
+                    <div class="admin-stat-icon admin-purple">↻</div>
+                    <span class="admin-stat-label">IN PROGRESS</span>
+                </div>
+                <h2>{{ in_progress }}</h2>
+                <p>Currently being handled</p>
+            </div>
+
+            <div class="admin-stat-card">
+                <div class="admin-stat-top">
+                    <div class="admin-stat-icon admin-green">✓</div>
+                    <span class="admin-stat-label">RESOLVED</span>
+                </div>
+                <h2>{{ resolved }}</h2>
+                <p>Successfully resolved</p>
+            </div>
+
+        </section>
+
+
+        <!-- SECONDARY OVERVIEW -->
+        <section class="admin-overview-grid">
+
+            <div class="admin-overview-card">
+
+                <div class="overview-icon">👥</div>
+
+                <div>
+                    <span>Registered Citizens</span>
+                    <h3>{{ total_users }}</h3>
+                    <small>Citizen accounts</small>
+                </div>
+
+            </div>
+
+            <div class="admin-overview-card">
+
+                <div class="overview-icon">📈</div>
+
+                <div>
+                    <span>Resolution Rate</span>
+
+                    <h3>
+                        {{ ((resolved / total * 100)|round|int) if total else 0 }}%
+                    </h3>
+
+                    <small>Of all submitted complaints</small>
+                </div>
+
+            </div>
+
+            <div class="admin-overview-card">
+
+                <div class="overview-icon">📋</div>
+
+                <div>
+                    <span>Open Complaints</span>
+
+                    <h3>{{ pending + in_progress }}</h3>
+
+                    <small>Require attention</small>
+                </div>
+
+            </div>
+
+        </section>
+
+        <!-- ANALYTICS CHARTS -->
+        <section class="admin-chart-grid" aria-label="Complaint analytics">
+
+            <article class="admin-chart-card">
+                <div class="admin-chart-heading">
+                    <h2>Complaints by Category</h2>
+                    <p>Distribution across all reported categories.</p>
+                </div>
+                {% if category_labels %}
+                <div class="admin-chart-canvas">
+                    <canvas id="categoryChart"
+                            aria-label="Bar chart showing complaint counts by category"
+                            role="img"></canvas>
+                </div>
+                {% else %}
+                <p class="admin-chart-empty">No complaint categories yet.</p>
+                {% endif %}
+            </article>
+
+            <article class="admin-chart-card">
+                <div class="admin-chart-heading">
+                    <h2>Complaints by Status</h2>
+                    <p>Current status of all complaints.</p>
+                </div>
+                {% if total %}
+                <div class="admin-chart-canvas admin-status-chart">
+                    <canvas id="statusChart"
+                            aria-label="Doughnut chart showing complaint counts by status"
+                            role="img"></canvas>
+                </div>
+                {% else %}
+                <p class="admin-chart-empty">No complaints to display.</p>
+                {% endif %}
+            </article>
+
+        </section>
+
+
+        <!-- COMPLAINT MANAGEMENT -->
+        <section class="admin-complaint-section" id="admin-complaints">
+
+            <div class="admin-section-heading">
+
+                <div>
+                    <h2>Complaint Management</h2>
+                    <p>Review citizen reports and update their progress.</p>
+                </div>
+
+                <span class="admin-total-pill">
+                    {{ complaints|length }} Records
+                </span>
+
+            </div>
+
+
+            {% if complaints %}
+
+            <!-- SEARCH AND FILTER -->
+            <div class="admin-filters">
+
+                <div class="admin-search">
+                    <span>🔍</span>
+                    <input
+                        type="text"
+                        id="adminSearch"
+                        placeholder="Search ID, citizen, email or description..."
+                        oninput="filterAdminComplaints()"
+                    >
+                </div>
+
+                <label class="admin-date-filter">
+                    <span>From</span>
+                    <input type="date" id="adminDateFrom"
+                           aria-label="Filter complaints submitted from this date"
+                           onchange="filterAdminComplaints()">
+                </label>
+
+                <label class="admin-date-filter">
+                    <span>To</span>
+                    <input type="date" id="adminDateTo"
+                           aria-label="Filter complaints submitted through this date"
+                           onchange="filterAdminComplaints()">
+                </label>
+
+                <select id="adminCategory" onchange="filterAdminComplaints()">
+                    <option value="">All Categories</option>
+                    <option value="Road">Road</option>
+                    <option value="Water">Water</option>
+                    <option value="Electricity">Electricity</option>
+                    <option value="Garbage">Garbage</option>
+                    <option value="Other">Other</option>
+                </select>
+
+                <select id="adminStatus" onchange="filterAdminComplaints()">
+                    <option value="">All Statuses</option>
+                    <option value="Pending">Pending</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Resolved">Resolved</option>
+                </select>
+
+            </div>
+
+
+            <div class="admin-filter-count">
+                Showing <strong id="adminVisibleCount">{{ complaints|length }}</strong>
+                of {{ complaints|length }} complaints
+            </div>
+
+
+            <!-- COMPLAINT CARDS -->
+            <div class="admin-complaint-list">
+
+                {% for complaint in complaints %}
+
+                <article
+                    class="admin-complaint-card"
+                    data-category="{{ complaint.category }}"
+                    data-status="{{ complaint.status }}"
+                    data-date="{{ complaint.created_at.strftime('%Y-%m-%d') }}"
+                    data-search="{{ complaint.complaint_id }} {{ complaint.user.name }} {{ complaint.user.email }} {{ complaint.description }} {{ complaint.category }} {{ complaint.location or '' }}">
+
+                    <!-- CARD HEADER -->
+                    <div class="admin-card-header">
+
+                        <div>
+                            <span class="admin-reference">
+                                {{ complaint.complaint_id }}
+                            </span>
+
+                            <span class="admin-category">
+                                {{ complaint.category }}
+                            </span>
+                        </div>
+
+                        {% if complaint.status == 'Resolved' %}
+
+                        <span class="status-badge status-resolved">
+                            ● Resolved
+                        </span>
+
+                        {% elif complaint.status == 'In Progress' %}
+
+                        <span class="status-badge status-progress">
+                            ● In Progress
+                        </span>
+
+                        {% else %}
+
+                        <span class="status-badge status-pending">
+                            ● Pending
+                        </span>
+
+                        {% endif %}
+
+                    </div>
+
+
+                    <!-- CITIZEN INFORMATION -->
+                    <div class="admin-citizen-info">
+
+                        <div class="citizen-avatar">
+                            {{ complaint.user.name[0]|upper }}
+                        </div>
+
+                        <div>
+                            <strong>{{ complaint.user.name }}</strong>
+                            <small>{{ complaint.user.email }}</small>
+                        </div>
+
+                        <div class="admin-submitted-date">
+                            <small>SUBMITTED ON</small>
+                            <strong>
+                                {{ complaint.created_at.strftime('%d %b %Y, %I:%M %p') }}
+                            </strong>
+                        </div>
+
+                    </div>
+
+
+                    <!-- DESCRIPTION -->
+                    <div class="admin-description">
+                        <span>COMPLAINT DESCRIPTION</span>
+                        <p>{{ complaint.description }}</p>
+                    </div>
+
+                    {% if complaint.location %}
+                    <div class="admin-description">
+                        <span>LOCATION</span>
+                        <p>{{ complaint.location }}</p>
+                    </div>
+                    {% endif %}
+
+                    {% if complaint.image_filename %}
+                    <div class="admin-description">
+                        <span>PHOTO EVIDENCE</span>
+                        <p>
+                            <a href="{{ url_for('static', filename='uploads/' ~ complaint.image_filename) }}"
+                               target="_blank" rel="noopener noreferrer">
+                                <img
+                                    src="{{ url_for('static', filename='uploads/' ~ complaint.image_filename) }}"
+                                    alt="Photo evidence for complaint {{ complaint.complaint_id }}"
+                                    class="img-thumbnail"
+                                    style="max-width: 240px; max-height: 180px;">
+                            </a>
+                        </p>
+                    </div>
+                    {% endif %}
+
+
+                    <!-- STATUS UPDATE FORM -->
+                    <div class="admin-update-panel">
+
+                        <div class="admin-update-title">
+                            <span>⚙️</span>
+                            <strong>Update Complaint</strong>
+                        </div>
+
+                        <form
+                            method="POST"
+                            action="{{ url_for('update_status', complaint_id=complaint.id) }}"
+                            class="admin-update-form">
+
+                            <div class="admin-form-field">
+
+                                <label>Complaint Status</label>
+
+                                <select name="status" required>
+
+                                    <option value="Pending"
+                                        {% if complaint.status == 'Pending' %}selected{% endif %}>
+                                        Pending
+                                    </option>
+
+                                    <option value="In Progress"
+                                        {% if complaint.status == 'In Progress' %}selected{% endif %}>
+                                        In Progress
+                                    </option>
+
+                                    <option value="Resolved"
+                                        {% if complaint.status == 'Resolved' %}selected{% endif %}>
+                                        Resolved
+                                    </option>
+
+                                </select>
+
+                            </div>
+
+                            <div class="admin-form-field admin-note-field">
+
+                                <label>Resolution / Update Remarks</label>
+
+                                <input
+                                    type="text"
+                                    name="note"
+                                    maxlength="500"
+                                    placeholder="Enter action taken or update remarks..."
+                                >
+
+                            </div>
+
+                            <button type="submit" class="admin-update-button">
+                                Save Update →
+                            </button>
+
+                        </form>
+
+                    </div>
+
+
+                    <!-- STATUS TIMELINE -->
+                    <details class="admin-history">
+
+                        <summary>
+                            <span>◷</span>
+                            View Status History
+                            <span class="history-count">
+                                {{ complaint.status_history|length }} Updates
+                            </span>
+                        </summary>
+
+                        <div class="history-content">
+
+                            {% if complaint.status_history %}
+
+                            <div class="history-timeline">
+
+                                {% for event in complaint.status_history|reverse %}
+
+                                <div class="history-item">
+
+                                    <div class="history-dot"></div>
+
+                                    <div class="history-event">
+
+                                        <div class="history-event-header">
+
+                                            <strong>{{ event.status }}</strong>
+
+                                            <time>
+                                                {{ event.created_at.strftime('%d %b %Y, %I:%M %p') }}
+                                            </time>
+
+                                        </div>
+
+                                        <p>{{ event.note or 'No remarks provided.' }}</p>
+
+                                        <small>
+                                            Updated by:
+                                            {{ event.updated_by or 'System' }}
+                                        </small>
+
+                                    </div>
+
+                                </div>
+
+                                {% endfor %}
+
+                            </div>
+
+                            {% else %}
+
+                            <p class="history-empty">
+                                No status history available.
+                            </p>
+
+                            {% endif %}
+
+                        </div>
+
+                    </details>
+
+                </article>
+
+                {% endfor %}
+
+            </div>
+
+
+            <!-- NO FILTER RESULTS -->
+            <div id="adminNoResults" class="admin-no-results"
+                 style="display:none;">
+
+                <div>🔎</div>
+                <h3>No matching complaints</h3>
+                <p>Try changing your search or filters.</p>
+
+                <button type="button" onclick="resetAdminFilters()">
+                    Clear Filters
+                </button>
+
+            </div>
+
+
+            {% else %}
+
+            <div class="admin-empty-state">
+                <div>📋</div>
+                <h3>No complaints received yet</h3>
+                <p>Citizen submissions will appear here.</p>
+            </div>
+
+            {% endif %}
+
+        </section>
+
+
+        <footer class="admin-footer">
+            CivicConnect Administration · Building accountable communities.
+        </footer>
+
+    </main>
+
+</div>
+
+{% if category_labels %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+{% endif %}
+
+<!-- ADMIN SEARCH AND FILTER -->
+<script>
+
+function filterAdminComplaints() {
+
+    const search = document
+        .getElementById("adminSearch")
+        .value.toLowerCase()
+        .trim();
+
+    const category = document
+        .getElementById("adminCategory")
+        .value;
+
+    const status = document
+        .getElementById("adminStatus")
+        .value;
+
+    const dateFrom = document.getElementById("adminDateFrom").value;
+    const dateTo = document.getElementById("adminDateTo").value;
+
+    const cards = document.querySelectorAll(".admin-complaint-card");
+
+    let visible = 0;
+
+    cards.forEach(card => {
+
+        const text = card.dataset.search.toLowerCase();
+
+        const matchesSearch = text.includes(search);
+
+        const matchesCategory =
+            !category || card.dataset.category === category;
+
+        const matchesStatus =
+            !status || card.dataset.status === status;
+
+        const matchesDateFrom =
+            !dateFrom || card.dataset.date >= dateFrom;
+
+        const matchesDateTo =
+            !dateTo || card.dataset.date <= dateTo;
+
+        const show =
+            matchesSearch && matchesCategory && matchesStatus &&
+            matchesDateFrom && matchesDateTo;
+
+        card.style.display = show ? "" : "none";
+
+        if (show) {
+            visible++;
+        }
+
+    });
+
+    document.getElementById("adminVisibleCount").textContent = visible;
+
+    document.getElementById("adminNoResults").style.display =
+        visible === 0 ? "block" : "none";
+
+}
+
+
+function resetAdminFilters() {
+
+    document.getElementById("adminSearch").value = "";
+    document.getElementById("adminCategory").value = "";
+    document.getElementById("adminStatus").value = "";
+    document.getElementById("adminDateFrom").value = "";
+    document.getElementById("adminDateTo").value = "";
+
+    filterAdminComplaints();
+
+}
+
+{% if category_labels %}
+const categoryChart = document.getElementById("categoryChart");
+if (categoryChart && window.Chart) {
+    new Chart(categoryChart, {
+        type: "bar",
+        data: {
+            labels: {{ category_labels|tojson }},
+            datasets: [{
+                label: "Complaints",
+                data: {{ category_counts|tojson }},
+                backgroundColor: ["#3472cf", "#d99521", "#8058c7", "#21965a", "#35a6a0"],
+                borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+        }
+    });
+}
+{% endif %}
+
+{% if total %}
+const statusChart = document.getElementById("statusChart");
+if (statusChart && window.Chart) {
+    new Chart(statusChart, {
+        type: "doughnut",
+        data: {
+            labels: ["Pending", "In Progress", "Resolved"],
+            datasets: [{
+                data: [{{ pending }}, {{ in_progress }}, {{ resolved }}],
+                backgroundColor: ["#d99521", "#8058c7", "#21965a"],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: "bottom" } }
+        }
+    });
+}
+{% endif %}
+
+</script>
+
+{% endblock %}
